@@ -1,19 +1,19 @@
 self.__precacheManifest = [
   {
-    "revision": "9b9c5e2851b3fae03425",
-    "url": "/react-weather-app/static/css/main.f7c8e306.chunk.css"
+    "revision": "cf9ff946696029139a0f",
+    "url": "/react-weather-app/static/css/main.7a96862b.chunk.css"
   },
   {
-    "revision": "9b9c5e2851b3fae03425",
-    "url": "/react-weather-app/static/js/main.9b9c5e28.chunk.js"
+    "revision": "cf9ff946696029139a0f",
+    "url": "/react-weather-app/static/js/main.cf9ff946.chunk.js"
   },
   {
-    "revision": "3247e3472ee940ea5289",
-    "url": "/react-weather-app/static/css/1.39681037.chunk.css"
+    "revision": "6e44fc63f916ba08110a",
+    "url": "/react-weather-app/static/css/1.5d47209f.chunk.css"
   },
   {
-    "revision": "3247e3472ee940ea5289",
-    "url": "/react-weather-app/static/js/1.3247e347.chunk.js"
+    "revision": "6e44fc63f916ba08110a",
+    "url": "/react-weather-app/static/js/1.6e44fc63.chunk.js"
   },
   {
     "revision": "72a6b7ef5541b624727a",
@@ -36,7 +36,7 @@ self.__precacheManifest = [
     "url": "/react-weather-app/static/media/mist-1.0f5b4038.png"
   },
   {
-    "revision": "78b01d29ea80501c37e4baa28e6ba92f",
+    "revision": "dce77ec4978cdc5bfaa52ceff4e65904",
     "url": "/react-weather-app/index.html"
   }
 ];
