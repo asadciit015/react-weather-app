@@ -2,6 +2,7 @@
   "name": "weather-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://asadciit015.github.io/react-weather-app/",
   "dependencies": {
     "@commercetools-uikit/async-select-field": "^16.7.3",
     "@commercetools-uikit/search-select-field": "^16.7.3",
