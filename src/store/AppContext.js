@@ -35,46 +35,63 @@ const defaultLocation = () => {
     };
 };
 
+const defaultSearchedLocations = () => {
+  const storedSearchedLocations = JSON.parse(
+    localStorage.getItem("searchedLocations") || "[]"
+  ).filter((sl) => isValidLocation(sl));
+  if (storedSearchedLocations.length > 0) return storedSearchedLocations;
+  else return [defaultLocation()];
+};
+
 const AppProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultTheme());
-  const [searchedLocations, setSearchedLocations] = useState([
-    defaultLocation(),
-  ]);
   const [currentLocation, setCurrentLocation] = useState(defaultLocation());
   const [currentTimeZone, setTimeZone] = useState();
+  const [searchedLocations, setSearchedLocations] = useState(
+    defaultSearchedLocations()
+  );
 
   const findSetLocation = (coords) => {
     searchByCoordinates(coords).then((foundLocations) => {
       const locations = foundLocations.map((l) => {
         return { selected: true, ...l };
       });
-      console.table(locations);
-      setSearchedLocations([...searchedLocations, ...locations]);
+      setSearchedLocationsHandle(locations[0]);
       setCurrentLocationHandle(locations[0]);
+    });
+  };
+
+  const setSearchedLocationsHandle = (location) => {
+    setSearchedLocations((prevSearchedLocations) => {
+      var searchedLocationsToUpdate = prevSearchedLocations;
+      searchedLocationsToUpdate.map((l) => {
+        return { ...l, selected: l.id === location.id };
+      });
+      upsert(searchedLocationsToUpdate, location, "id", true);
+      searchedLocationsToUpdate = searchedLocationsToUpdate.slice(0, 5); // keep last 5 searched locations
+      localStorage.setItem(
+        "searchedLocations",
+        JSON.stringify(searchedLocationsToUpdate)
+      );
+      console.log("searchedLocations", searchedLocationsToUpdate);
+      return searchedLocationsToUpdate;
     });
   };
 
   const setCurrentLocationHandle = (curLoc) => {
     localStorage.setItem("currentLocation", JSON.stringify(curLoc));
     setCurrentLocation(curLoc);
-    console.table(curLoc);
+    // console.table(curLoc);
   };
 
-  const updateCurrentLocation = (locationData) => {
+  const selectLocationHandle = (locationData) => {
     if (isValidLocation(locationData)) {
       const newCurrentLocation = { ...locationData, selected: true };
-      const searchedLocationsUpdate = searchedLocations.map((l) => {
-        return { ...l, selected: false };
-      });
-      upsert(searchedLocationsUpdate, newCurrentLocation, "id");
-      setSearchedLocations(searchedLocationsUpdate);
-
-      console.log("[updateCurrentLocation] ---> ", searchedLocationsUpdate);
-
+      setSearchedLocationsHandle(newCurrentLocation);
       setCurrentLocationHandle(newCurrentLocation);
     } else
       toast.error(
-        "[updateCurrentLocation] Invalid location provided: ",
+        "[selectLocationHandle] Invalid location provided: ",
         locationData
       );
   };
@@ -125,6 +142,12 @@ const AppProvider = ({ children }) => {
       localStorage.getItem("currentLocation") || "{}"
     );
     if (!isValidLocation(storedCurrentLocation)) setMyGeoLocation();
+
+    // const storedSearchedLocations = JSON.parse(
+    //   localStorage.getItem("searchedLocations") || "[]"
+    // ).filter((sl) => isValidLocation(sl));
+    // if (storedSearchedLocations.length === 0)
+    //   setSearchedLocationsHandle(defaultSearchedLocations());
   }, []);
 
   useEffect(() => {
@@ -147,7 +170,7 @@ const AppProvider = ({ children }) => {
         currentLocation: currentLocation,
         setCurrentLocation: setCurrentLocationHandle,
         setMyGeoLocation: setMyGeoLocation,
-        updateCurrentLocation: updateCurrentLocation,
+        selectLocationHandle: selectLocationHandle,
         // time context
         currentTimeZone: currentTimeZone,
       }}

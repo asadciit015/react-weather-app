@@ -2,6 +2,8 @@ import React, { useState, useContext } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
+import Slide from "@mui/material/Slide";
+
 import { styled } from "@mui/system";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
@@ -12,7 +14,6 @@ import parse from "autosuggest-highlight/parse";
 
 import { AppContext } from "../store/AppContext";
 import { searchLocation } from "../api/api";
-import { upsert } from "../helpers/helper";
 
 const SearchIcon = (props) => {
   return (
@@ -83,7 +84,7 @@ const getOptionLabel = (option) =>
 
 export default function SearchBar() {
   const {
-    updateCurrentLocation,
+    selectLocationHandle,
     currentLocation,
     setCurrentLocation,
     searchedLocations,
@@ -93,107 +94,141 @@ export default function SearchBar() {
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState(searchedLocations);
   const [fetching, setFetching] = useState(false);
+  const [showSelectedLocation, setShowSelectedLocation] = useState(false);
+
+  React.useEffect(() => {
+    if (!fetching && !inputValue.trim()) {
+      setOptions(searchedLocations);
+    }
+  }, [inputValue, fetching, searchedLocations]);
 
   // useEffect(() => {
   //   setInputValue(getOptionLabel(currentLocation));
   // }, [currentLocation]);
 
   return (
-    <SearchAutocomplete
-      id="custom-location-search"
-      // sx={{ maxWidth: 900 }}
-      getOptionLabel={(option) => {
-        // console.log("[getOptionLabel] => options:", options);
-        return typeof option === "string" ? option : getOptionLabel(option);
-      }}
-      options={options}
-      autoComplete
-      // openOnFocus
-      disableClearable
-      includeInputInList
-      //   filterSelectedOptions
-      fullWidth
-      loading={fetching}
-      value={inputValue}
-      loadingText={"Searching for locations ..."}
-      // noOptionsText="No matcing locations found. Try any other query."
-      // isOptionEqualToValue={(option, value) => option.id === value.id}
-      onChange={(event, value, reason, details) => {
-        let newOptions = options;
-        console.log(
-          `[onChange] => value: "${value}", reason: "${reason}", options: ${options}`
-        );
-        !!value && upsert(newOptions, value, "id");
-        upsert(newOptions, currentLocation, "id");
-        setCurrentLocation(value);
-        setOptions(newOptions);
-        updateCurrentLocation(value);
-        setTimeout(() => {
-          setInputValue("");
-        }, 500);
-      }}
-      onInputChange={(event, value, reason) => {
-        if (value === inputValue) return;
-        console.log(
-          `[onInputChange] => value: "${value}", reason: "${reason}"`
-        );
-        setInputValue(value);
-        // if (reason === "clear") setCurrentLocation();
-        // else if (!!value.trim() === false ) {
-        //   setOptions(searchedLocations);
-        // } else {
-        setFetching(true);
-        locationSearchHandle(inputValue, (results) => {
-          results.then((foundOptions) => {
-            console.log("foundOptions: ", foundOptions);
-            setOptions(foundOptions);
-            setFetching(false);
-          });
-        });
-        // }
-      }}
-      renderInput={(params) => (
-        <SearchTextField
-          {...params}
-          InputProps={{
-            ...params.InputProps,
-            startAdornment: <SearchIcon style={{ marginRight: 29 }} />,
-          }}
-          autoFocus
-          placeholder="Address, City or Zip Code"
-        />
-      )}
-      renderOption={(props, option) => {
-        const matches = match(option.name, inputValue);
-        const parts = parse(`${option.name}, ${option.country}`, matches);
+    <Box>
+      <SearchAutocomplete
+        id="custom-location-search"
+        // sx={{ maxWidth: 900 }}
+        getOptionLabel={(option) => {
+          // console.log("[getOptionLabel] => options:", options);
+          return typeof option === "string" ? option : getOptionLabel(option);
+        }}
+        options={options}
+        autoComplete
+        // openOnFocus
+        disableClearable
+        includeInputInList
+        filterSelectedOptions
+        fullWidth
+        loading={fetching}
+        value={inputValue}
+        loadingText={"Searching for locations ..."}
+        noOptionsText="No matcing locations found. Try any other query."
+        // isOptionEqualToValue={(option, value) => option.id === value.id}
+        onChange={(event, value, reason, details) => {
+          console.log(
+            `
+            [onChange] =>  \n
+            \t  value: "${JSON.stringify(value)}" \n
+            \t  reason: ${reason} \n
+          `
+          );
+          setCurrentLocation(value);
+          setOptions(searchedLocations);
+          selectLocationHandle(value);
+          setShowSelectedLocation(true);
 
-        return (
-          <li {...props}>
-            <Grid container alignItems="center">
-              <Grid item sx={{ display: "flex", width: 44 }}>
-                <LocationOnIcon sx={{ color: "text.secondary" }} />
+          setTimeout(() => {
+            setInputValue("");
+            setShowSelectedLocation(false);
+          }, 400);
+        }}
+        onInputChange={(event, value, reason) => {
+          console.log(
+            `[onInputChange] => value: "${value}", reason: "${reason}"`
+          );
+          setInputValue(value);
+
+          if (!!value.trim() && value !== inputValue && reason === "input") {
+            setFetching(true);
+            locationSearchHandle(value, (results) => {
+              results.then((foundOptions) => {
+                console.log("foundOptions: ", foundOptions);
+                setOptions(foundOptions);
+                setFetching(false);
+              });
+            });
+          }
+        }}
+        renderInput={(params) => (
+          <SearchTextField
+            {...params}
+            InputProps={{
+              ...params.InputProps,
+              startAdornment: <SearchIcon style={{ marginRight: 29 }} />,
+            }}
+            autoFocus
+            placeholder="Address, City or Zip Code"
+          />
+        )}
+        renderOption={(props, option) => {
+          const matches = match(option.name, inputValue);
+          const parts = parse(`${option.name}, ${option.country}`, matches);
+
+          return (
+            <li {...props}>
+              <Grid container alignItems="center">
+                <Grid item sx={{ display: "flex", width: 44 }}>
+                  <LocationOnIcon sx={{ color: "text.secondary" }} />
+                </Grid>
+                <Grid
+                  item
+                  sx={{ width: "calc(100% - 44px)", wordWrap: "break-word" }}
+                >
+                  {parts.map((part, index) => (
+                    <Box
+                      key={index}
+                      component="span"
+                      sx={{ fontWeight: part.highlight ? "bold" : "regular" }}
+                    >
+                      {part.text}
+                    </Box>
+                  ))}
+                  <Typography variant="body2" color="text.secondary">
+                    {option.region}
+                  </Typography>
+                </Grid>
               </Grid>
-              <Grid
-                item
-                sx={{ width: "calc(100% - 44px)", wordWrap: "break-word" }}
-              >
-                {parts.map((part, index) => (
-                  <Box
-                    key={index}
-                    component="span"
-                    sx={{ fontWeight: part.highlight ? "bold" : "regular" }}
-                  >
-                    {part.text}
-                  </Box>
-                ))}
-                <Typography variant="body2" color="text.secondary">
-                  {option.region}
-                </Typography>
-              </Grid>
-            </Grid>
-          </li>
-        );
-      }}
-    />
+            </li>
+          );
+        }}
+      />
+
+      <Slide
+        in={showSelectedLocation}
+        direction="down"
+        mountOnEnter
+        unmountOnExit
+        timeout={400}
+      >
+        {currentLocation && (
+          <Box
+            sx={{
+              position: "absolute",
+              zIndex: 1,
+              top: "11em",
+              opacity: 0.1,
+              left: "18em",
+            }}
+          >
+            <Typography variant="h6">
+              {currentLocation.name}, {currentLocation.country}
+            </Typography>
+          </Box>
+        )}
+      </Slide>
+    </Box>
   );
 }
