@@ -68,7 +68,7 @@ const LocationButton = styled(Button)(({ theme }) => ({
 }));
 
 export default function Header() {
-  const { setMyGeoLocation } = useContext(AppContext);
+  const { loading, setMyGeoLocation } = useContext(AppContext);
 
   return (
     <HeaderContainer component={"header"}>
@@ -88,6 +88,7 @@ export default function Header() {
             />
           }
           onClick={setMyGeoLocation}
+          disabled={!!loading}
         >
           Current Location
         </LocationButton>

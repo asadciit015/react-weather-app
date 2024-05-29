@@ -30,7 +30,8 @@ const MainContainer = styled(Box)(({ theme }) => ({
 }));
 
 export default function App() {
-  const { theme } = useContext(AppContext);
+  const { currentWeather, currentWeatherForecast, theme } =
+    useContext(AppContext);
 
   const myTheme = createTheme({
     palette: {

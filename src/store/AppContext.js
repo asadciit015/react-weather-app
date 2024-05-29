@@ -1,6 +1,15 @@
 import React, { useState, useEffect, createContext } from "react";
-import { searchByCoordinates } from "../api/api";
-import { isValidLocation, upsert } from "../helpers/helper";
+import {
+  defaultWeatherData,
+  searchByCoordinates,
+  weatherForecastByCoordinates,
+} from "../api/api";
+import {
+  isValidLocation,
+  isValidWeather,
+  isValidWeatherForecast,
+  upsert,
+} from "../helpers/helper";
 import tzlookup from "tz-lookup";
 import { toast } from "react-toastify";
 
@@ -11,8 +20,9 @@ const defaultTheme = () => {
   if (storedTheme === "dark" || storedTheme === "light") {
     return storedTheme;
   } else {
-    const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)")
-      .matches;
+    const prefersDarkMode = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
     return prefersDarkMode ? "dark" : "light";
   }
 };
@@ -22,17 +32,24 @@ const defaultLocation = () => {
     localStorage.getItem("currentLocation") || "{}"
   );
   if (isValidLocation(storedCurrentLocation)) return storedCurrentLocation;
-  else
-    return {
-      id: 1913296,
-      name: "Lahore",
-      region: "Punjab",
-      country: "Pakistan",
-      lat: 31.57,
-      lon: 74.29,
-      url: "lahore-punjab-pakistan",
-      selected: true,
-    };
+  else return defaultWeatherData.location;
+};
+
+const defaultCurrentWeather = () => {
+  const storedCurrentWeather = JSON.parse(
+    localStorage.getItem("currentWeather") || "{}"
+  );
+  if (isValidWeather(storedCurrentWeather)) return storedCurrentWeather;
+  else return defaultWeatherData.current;
+};
+
+const defaultCurrentWeatherForecast = () => {
+  const storedCurrentWeatherForecast = JSON.parse(
+    localStorage.getItem("currentWeatherForecast") || "{}"
+  );
+  if (isValidWeatherForecast(storedCurrentWeatherForecast))
+    return storedCurrentWeatherForecast;
+  else return defaultWeatherData.forecast;
 };
 
 const defaultSearchedLocations = () => {
@@ -47,17 +64,30 @@ const AppProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultTheme());
   const [currentLocation, setCurrentLocation] = useState(defaultLocation());
   const [currentTimeZone, setTimeZone] = useState();
+  const [currentWeather, setCurrentWeather] = useState(defaultCurrentWeather());
+  const [currentWeatherForecast, setCurrentWeatherForecast] = useState(
+    defaultCurrentWeatherForecast()
+  ); //it will be of max 3 days
   const [searchedLocations, setSearchedLocations] = useState(
     defaultSearchedLocations()
   );
+  const [loading, setLoading] = useState(false);
 
   const findSetLocation = (coords) => {
+    setLoading("geolocation");
     searchByCoordinates(coords).then((foundLocations) => {
       const locations = foundLocations.map((l) => {
         return { selected: true, ...l };
       });
       setSearchedLocationsHandle(locations[0]);
       setCurrentLocationHandle(locations[0]);
+      weatherForecastByCoordinates(coords).then((response) => {
+        setCurrentWeatherHandle(response.current);
+        setCurrentWeatherForecastHandle(response.forecast);
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+      });
     });
   };
 
@@ -86,14 +116,38 @@ const AppProvider = ({ children }) => {
 
   const selectLocationHandle = (locationData) => {
     if (isValidLocation(locationData)) {
+      setLoading("selectLocation");
       const newCurrentLocation = { ...locationData, selected: true };
       setSearchedLocationsHandle(newCurrentLocation);
       setCurrentLocationHandle(newCurrentLocation);
+      weatherForecastByCoordinates({
+        lat: newCurrentLocation.lat,
+        lon: newCurrentLocation.lon,
+      }).then((response) => {
+        setCurrentWeatherHandle(response.current);
+        setCurrentWeatherForecastHandle(response.forecast);
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+      });
     } else
       toast.error(
         "[selectLocationHandle] Invalid location provided: ",
         locationData
       );
+  };
+
+  const setCurrentWeatherHandle = (curWeather) => {
+    localStorage.setItem("currentWeather", JSON.stringify(curWeather));
+    setCurrentWeather(curWeather);
+  };
+
+  const setCurrentWeatherForecastHandle = (curWeatherForecast) => {
+    localStorage.setItem(
+      "currentWeatherForecast",
+      JSON.stringify(curWeatherForecast)
+    );
+    setCurrentWeatherForecast(curWeatherForecast);
   };
 
   const setMyGeoLocation = () => {
@@ -130,8 +184,9 @@ const AppProvider = ({ children }) => {
     if (storedTheme === "dark" || storedTheme === "light") {
       updateTheme(storedTheme);
     } else {
-      const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches;
+      const prefersDarkMode = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       updateTheme(prefersDarkMode ? "dark" : "light");
     }
   };
@@ -167,12 +222,15 @@ const AppProvider = ({ children }) => {
         switchTheme,
         // location context
         searchedLocations,
+        loading: loading,
         currentLocation: currentLocation,
         setCurrentLocation: setCurrentLocationHandle,
         setMyGeoLocation: setMyGeoLocation,
         selectLocationHandle: selectLocationHandle,
         // time context
         currentTimeZone: currentTimeZone,
+        currentWeather: currentWeather,
+        currentWeatherForecast: currentWeatherForecast,
       }}
     >
       {children}

@@ -1,6 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
+import Avatar from "@mui/material/Avatar";
+import Skeleton from "@mui/material/Skeleton";
 import { Box, Grid, Typography, useTheme } from "@mui/material";
 import { styled } from "@mui/system";
+import { getTodayForecastweather } from "../helpers/helper";
+import { AppContext } from "../store/AppContext";
 
 const WeatherDetailsContainer = styled(Grid)(({ theme }) => ({
   // paddingTop: 30.33,
@@ -96,6 +100,8 @@ const WeatherType = styled(Typography)(({ theme }) => ({
   fontWeight: theme.palette.mode === "light" ? 700 : 600,
   fontSize: 32,
   textAlign: "center",
+  // wordWrap: "break-word",
+  // maxWidth: 214,
 }));
 
 const ExtraDetailLabel = styled(Typography)(({ theme }) => ({
@@ -112,6 +118,13 @@ const ExtraDetailValue = styled(Typography)(({ theme }) => ({
 
 function WeatherDetails(props) {
   const { weatherType } = props;
+  const { loading, currentTimeZone, currentWeather, currentWeatherForecast } =
+    useContext(AppContext);
+  const todayForecastweather = getTodayForecastweather(
+    currentWeatherForecast,
+    currentTimeZone
+  );
+
   const theme = useTheme();
 
   return (
@@ -123,33 +136,99 @@ function WeatherDetails(props) {
         md={4}
         // lg={4}
       >
-        <Temperature color="primary">24°C</Temperature>
-        <FeelsLike>
-          <FeelsLikeLabel>Feels like:</FeelsLikeLabel>
-          <FeelsLikeValue>22°C</FeelsLikeValue>
-        </FeelsLike>
+        {loading ? (
+          <React.Fragment>
+            <Skeleton
+              animation="wave"
+              variant={"rounded"}
+              width="80%"
+              style={{ margin: theme.spacing(1, 0, 2, 0) }}
+            />
+            <Skeleton
+              animation="wave"
+              height={20}
+              width="70%"
+              style={{ marginBottom: theme.spacing(5) }}
+            />
+          </React.Fragment>
+        ) : (
+          <React.Fragment>
+            <Temperature color="primary">{`${currentWeather.temp_c}°C`}</Temperature>
+
+            <FeelsLike>
+              <FeelsLikeLabel>Feels like:</FeelsLikeLabel>
+              <FeelsLikeValue>{`${currentWeather.feelslike_c}°C`}</FeelsLikeValue>
+            </FeelsLike>
+          </React.Fragment>
+        )}
+
         <SunTimes p={"36.49px 0 0 20px"}>
-          <img
-            src={require(`../icons/sunrise-${theme.palette.mode}.png`)}
-            alt={"sunrise-icon"}
-            loading="lazy"
-          />
+          {loading ? (
+            <Skeleton
+              variant="circular"
+              animation="wave"
+              sx={{ marginRight: theme.spacing(1) }}
+            >
+              <Avatar />
+            </Skeleton>
+          ) : (
+            <img
+              src={require(`../icons/sunrise-${theme.palette.mode}.png`)}
+              alt={"sunrise-icon"}
+              loading="lazy"
+            />
+          )}
+
           <Box marginLeft={2}>
-            <SunRiseLabel>Sunrise</SunRiseLabel>
-            <SunRiseValue>06:37 AM</SunRiseValue>
+            {loading ? (
+              <Skeleton animation="wave" width="100%">
+                <SunRiseLabel>Sunrise</SunRiseLabel>
+              </Skeleton>
+            ) : (
+              <SunRiseLabel>Sunrise</SunRiseLabel>
+            )}
+            {loading ? (
+              <Skeleton animation="wave" width="100%">
+                <SunRiseValue>.</SunRiseValue>
+              </Skeleton>
+            ) : (
+              <SunRiseValue>{todayForecastweather.astro.sunrise}</SunRiseValue>
+            )}
           </Box>
         </SunTimes>
 
         <SunTimes p={"10.33px 0 0 20px"}>
-          <img
-            src={require(`../icons/sunset-${theme.palette.mode}.png`)}
-            alt={"sunset-icon"}
-            loading="lazy"
-          />
+          {loading ? (
+            <Skeleton
+              animation="wave"
+              variant="circular"
+              sx={{ marginRight: theme.spacing(1) }}
+            >
+              <Avatar />
+            </Skeleton>
+          ) : (
+            <img
+              src={require(`../icons/sunset-${theme.palette.mode}.png`)}
+              alt={"sunset-icon"}
+              loading="lazy"
+            />
+          )}
 
           <Box marginLeft={2}>
-            <SunRiseLabel>Sunset</SunRiseLabel>
-            <SunRiseValue>20:37 AM</SunRiseValue>
+            {loading ? (
+              <Skeleton animation="wave" width="100%">
+                <SunRiseLabel>Sunset</SunRiseLabel>
+              </Skeleton>
+            ) : (
+              <SunRiseLabel>Sunset</SunRiseLabel>
+            )}
+            {loading ? (
+              <Skeleton animation="wave" width="100%">
+                <SunRiseValue>.</SunRiseValue>
+              </Skeleton>
+            ) : (
+              <SunRiseValue>{todayForecastweather.astro.sunset}</SunRiseValue>
+            )}
           </Box>
         </SunTimes>
       </Grid>
@@ -161,17 +240,43 @@ function WeatherDetails(props) {
         // lg={4}
       >
         <Box display={"inline-grid"} sx={{ marginTop: "-56px" }}>
-          <Box
-            sx={{
-              width: 270,
-              height: 270,
-              flexShrink: 0,
-              backgroundImage: `url(${require(`../icons/${weatherType.toLowerCase()}.png`)})`,
-              backgroundSize: "cover",
-              backgroundRepeat: "no-repeat",
-            }}
-          ></Box>
-          <WeatherType>{weatherType}</WeatherType>
+          {loading ? (
+            <Skeleton
+              variant="circular"
+              sx={{ marginTop: "auto" }}
+              height="80%"
+              width="80%"
+            >
+              <Box
+                sx={{
+                  width: 270,
+                  height: 270,
+                }}
+              ></Box>
+            </Skeleton>
+          ) : (
+            <Box
+              sx={{
+                width: 270,
+                height: 270,
+                flexShrink: 0,
+                backgroundImage: `url(${require(`../icons/${weatherType.toLowerCase()}.png`)})`,
+                // backgroundImage: `url(${currentWeather.condition.icon})`,
+                backgroundSize: "cover",
+                backgroundRepeat: "no-repeat",
+              }}
+            ></Box>
+          )}
+
+          {loading ? (
+            <Skeleton sx={{ textAlign: "center" }} width="80%">
+              <WeatherType>.</WeatherType>
+            </Skeleton>
+          ) : (
+            <WeatherType sx={{ margin: "0px 29px ", fontSize: 26 }}>
+              {currentWeather.condition.text}
+            </WeatherType>
+          )}
         </Box>
       </Grid>
       <Grid
@@ -185,73 +290,189 @@ function WeatherDetails(props) {
           container
           columnSpacing={1}
           rowSpacing={3}
-        //   sx={{ marginLeft: "80px !important" }}
-
+          //   sx={{ marginLeft: "80px !important" }}
         >
           <Grid item xs={6}>
-            <img
-              src={require(`../icons/humidity-${theme.palette.mode}.png`)}
-              alt={"humidity-icon"}
-              loading="lazy"
-              style={{
-                width: 60,
-                height: 50.127,
-              }}
-            />
-            <ExtraDetailValue color="primary" sx={{ marginLeft: 2 }}>
-              41%
-            </ExtraDetailValue>
-            <ExtraDetailLabel color="primary">Humidity</ExtraDetailLabel>
+            {loading ? (
+              <Skeleton
+                animation="wave"
+                variant="circular"
+                sx={{
+                  marginRight: theme.spacing(1),
+                  marginBottom: theme.spacing(1),
+                }}
+              >
+                <Avatar />
+              </Skeleton>
+            ) : (
+              <img
+                src={require(`../icons/humidity-${theme.palette.mode}.png`)}
+                alt={"humidity-icon"}
+                loading="lazy"
+                style={{
+                  width: 60,
+                  height: 50.127,
+                }}
+              />
+            )}
+
+            {loading ? (
+              <>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailValue color="primary" sx={{ marginLeft: 2 }}>
+                    .
+                  </ExtraDetailValue>
+                </Skeleton>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailLabel color="primary">.</ExtraDetailLabel>
+                </Skeleton>
+              </>
+            ) : (
+              <>
+                <ExtraDetailValue color="primary" sx={{ marginLeft: 2 }}>
+                  {`${currentWeather.humidity}%`}
+                </ExtraDetailValue>
+                <ExtraDetailLabel color="primary">Humidity</ExtraDetailLabel>
+              </>
+            )}
           </Grid>
           <Grid item xs={6}>
-            <img
-              src={require(`../icons/wind-${theme.palette.mode}.png`)}
-              alt={"wind-icon"}
-              loading="lazy"
-              style={{
-                width: 60,
-                height: 50.127,
-              }}
-            />
-            <ExtraDetailValue color="primary" sx={{ marginLeft: 0.5 }}>
-              2km/h
-            </ExtraDetailValue>
-            <ExtraDetailLabel color="primary">Wind Speed</ExtraDetailLabel>
+            {loading ? (
+              <Skeleton
+                animation="wave"
+                variant="circular"
+                sx={{
+                  marginRight: theme.spacing(1),
+                  marginBottom: theme.spacing(1),
+                }}
+              >
+                <Avatar />
+              </Skeleton>
+            ) : (
+              <img
+                src={require(`../icons/wind-${theme.palette.mode}.png`)}
+                alt={"wind-icon"}
+                loading="lazy"
+                style={{
+                  width: 60,
+                  height: 50.127,
+                }}
+              />
+            )}
+            {loading ? (
+              <>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailValue color="primary" sx={{ marginLeft: 0.5 }}>
+                    .
+                  </ExtraDetailValue>
+                </Skeleton>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailLabel color="primary">.</ExtraDetailLabel>
+                </Skeleton>
+              </>
+            ) : (
+              <>
+                <ExtraDetailValue color="primary" sx={{ marginLeft: 0.5 }}>
+                  {`${currentWeather.wind_kph} km/h`}
+                </ExtraDetailValue>
+                <ExtraDetailLabel color="primary">Wind Speed</ExtraDetailLabel>
+              </>
+            )}
           </Grid>
           <Grid item xs={6}>
-            <img
-              src={require(`../icons/pressure-${theme.palette.mode}.png`)}
-              alt={"pressure-icon"}
-              loading="lazy"
-              style={{
-                width: 58,
-                height: 58,
-              }}
-            />
-            <ExtraDetailValue color="primary">997hPa</ExtraDetailValue>
-            <ExtraDetailLabel color="primary">Pressure</ExtraDetailLabel>
+            {loading ? (
+              <Skeleton
+                animation="wave"
+                variant="circular"
+                sx={{
+                  marginRight: theme.spacing(1),
+                  marginBottom: theme.spacing(1),
+                }}
+              >
+                <Avatar />
+              </Skeleton>
+            ) : (
+              <img
+                src={require(`../icons/pressure-${theme.palette.mode}.png`)}
+                alt={"pressure-icon"}
+                loading="lazy"
+                style={{
+                  width: 58,
+                  height: 58,
+                }}
+              />
+            )}
+            {loading ? (
+              <>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailValue color="primary">.</ExtraDetailValue>
+                </Skeleton>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailLabel color="primary">.</ExtraDetailLabel>
+                </Skeleton>
+              </>
+            ) : (
+              <>
+                <ExtraDetailValue color="primary">{`${currentWeather.pressure_mb} mb`}</ExtraDetailValue>
+                <ExtraDetailLabel color="primary">Pressure</ExtraDetailLabel>
+              </>
+            )}
           </Grid>
           <Grid item xs={6}>
-            <img
-              src={require(`../icons/uv-${theme.palette.mode}.png`)}
-              alt={"uv-icon"}
-              loading="lazy"
-              style={{
-                width: 58,
-                height: 58,
-              }}
-            />
-            <ExtraDetailValue color="primary" sx={{ marginLeft: 3 }}>
-              8
-            </ExtraDetailValue>
-            <ExtraDetailLabel color="primary" sx={{ marginLeft: 2.5 }}>
-              UV
-            </ExtraDetailLabel>
+            {loading ? (
+              <Skeleton
+                animation="wave"
+                variant="circular"
+                sx={{
+                  marginRight: theme.spacing(1),
+                  marginBottom: theme.spacing(1),
+                }}
+              >
+                <Avatar />
+              </Skeleton>
+            ) : (
+              <img
+                src={require(`../icons/uv-${theme.palette.mode}.png`)}
+                alt={"uv-icon"}
+                loading="lazy"
+                style={{
+                  width: 58,
+                  height: 58,
+                }}
+              />
+            )}
+            {loading ? (
+              <>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailValue color="primary" sx={{ marginLeft: 3 }}>
+                    .
+                  </ExtraDetailValue>
+                </Skeleton>
+                <Skeleton animation="wave" width="60%">
+                  <ExtraDetailLabel sx={{ marginLeft: 2.5 }} color="primary">
+                    .
+                  </ExtraDetailLabel>
+                </Skeleton>
+              </>
+            ) : (
+              <>
+                <ExtraDetailValue color="primary" sx={{ marginLeft: 3 }}>
+                  {`${currentWeather.uv}`}
+                </ExtraDetailValue>
+                <ExtraDetailLabel color="primary" sx={{ marginLeft: 2.5 }}>
+                  UV
+                </ExtraDetailLabel>
+              </>
+            )}
           </Grid>
         </Grid>
       </Grid>
     </WeatherDetailsContainer>
   );
 }
+
+// WeatherDetails.propTypes = {
+//   loading: PropTypes.bool,
+// };
 
 export default WeatherDetails;
